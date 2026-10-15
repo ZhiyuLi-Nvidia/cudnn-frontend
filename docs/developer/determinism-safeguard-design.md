@@ -60,6 +60,23 @@ PR diff -> check.py (CPU) -> manifest.py <- registered tests (GPU, marker: deter
 
 Maintainers make the gate a required status check in branch protection.
 
+## Phase 2 (optional): shared helpers, by example
+
+Deterministic kernels repeat a few mechanics. Share plain functions for them; no framework, no base class. Kernels import the helpers and the helpers never import kernels.
+
+```
+partials -> private buffer -> ordered handoff / reduce
+(layout)                      (ordering)
+```
+
+| Mechanic | Example helper |
+|---|---|
+| Ordering: tiles update a shared output in a fixed order | `turn_wait(sem, idx, turn)` / `turn_release(sem, idx, turn)` |
+| Independent buffers: partial results need their own space | declare regions `(name, dtype, shape, align, zero_init)`; get total bytes and views back |
+| Eligibility: when a deterministic path is allowed | one predicate per rule, shared by the engine selector and the kernel API |
+
+Each helper is adopted only where two or more kernels already duplicate it.
+
 ## Accepted risks
 
 - Pattern detectors miss unusual kernel forms; review and the manifest self-checks are the backstop.
